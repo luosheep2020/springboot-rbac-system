@@ -12,6 +12,7 @@ import com.rbac.repository.UserRepository;
 import com.rbac.repository.UserRoleRepository;
 import com.rbac.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
   private final UserRoleRepository userRoleRepository;
+  private final PasswordEncoder passwordEncoder;
 
   @Override
   public List<User> findAll() {
@@ -49,7 +51,7 @@ public class UserServiceImpl implements UserService {
 
     User user = new User()
       .setUsername(request.getUsername())
-      .setPassword(request.getPassword())
+      .setPassword(passwordEncoder.encode(request.getPassword()))
       .setEnabled(request.getEnabled() == null ? 1 : request.getEnabled())
       .setDeleted(0);
 
@@ -73,7 +75,7 @@ public class UserServiceImpl implements UserService {
     }
 
     if (request.getPassword() != null && !request.getPassword().isBlank()) {
-      user.setPassword(request.getPassword());
+      user.setPassword(passwordEncoder.encode(request.getPassword()));
     }
 
     if (request.getEnabled() != null) {
@@ -114,27 +116,27 @@ public class UserServiceImpl implements UserService {
       throw new BusinessException(ErrorCode.NOT_FOUND.getCode(), "some roles do not exist");
     }
 
-    // 先逻辑删除旧关系
     List<UserRole> oldUserRoles = userRoleRepository.findByUser_IdAndDeleted(userId, 0);
     for (UserRole oldUserRole : oldUserRoles) {
       oldUserRole.setDeleted(1);
     }
     userRoleRepository.saveAll(oldUserRoles);
 
-    // 去重，防止重复 roleId
     Set<Long> uniqueRoleIds = new LinkedHashSet<>(roleIds);
     List<UserRole> newUserRoles = new ArrayList<>();
 
     for (Long roleId : uniqueRoleIds) {
-      UserRole userRole = new UserRole();
-      userRole.setId(new UserRoleId(userId, roleId));
-      userRole.setUser(user);
       Role role = roles.stream()
         .filter(r -> r.getId().equals(roleId))
         .findFirst()
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND.getCode(), "role not found"));
+
+      UserRole userRole = new UserRole();
+      userRole.setId(new UserRoleId(userId, roleId));
+      userRole.setUser(user);
       userRole.setRole(role);
       userRole.setDeleted(0);
+
       newUserRoles.add(userRole);
     }
 
