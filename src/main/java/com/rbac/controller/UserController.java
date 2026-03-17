@@ -7,6 +7,7 @@ import com.rbac.entity.Role;
 import com.rbac.entity.User;
 import com.rbac.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 public class UserController {
   private final UserService userService;
   @GetMapping("/list")
+  @PreAuthorize("hasAnyAuthority('user:list')")
   public Response<List<User>> getAllUsers() {
     return Response.success(userService.findAll());
   }

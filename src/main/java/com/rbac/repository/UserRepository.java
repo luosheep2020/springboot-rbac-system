@@ -1,6 +1,7 @@
 package com.rbac.repository;
 
 import com.rbac.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -17,4 +18,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
   boolean existsByUsernameAndDeleted(String username, Integer deleted);
 
   boolean existsByUsernameAndDeletedAndIdNot(String username, Integer deleted, Long id);
+
+  @EntityGraph(attributePaths =
+    {"userRoles",
+      "userRoles.role",
+      "userRoles.role.rolePermissions",
+      "userRoles.role.rolePermissions.permission"})
+  Optional<User> findWithRolesAndPermissionsByUsernameAndDeletedAndEnabled(String username, Integer deleted, Integer enabled);
 }
