@@ -10,7 +10,7 @@ architecture** including **User, Role and Permission modules**.
 
 ## 🌍 Language
 
-English \| 日本語(README.ja.md)
+English \| [日本語](README.ja.md)
 
 ------------------------------------------------------------------------
 
